@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="https://wondaero.github.io/assets/css/normalize.css" >
+    <title>vm</title>
+    <style>
+        @font-face {
+            font-family: 'Pretendard';
+            src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+            font-weight: 400;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Pretendard';
+            src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Medium.woff') format('woff');
+            font-weight: 500;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Pretendard';
+            src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-SemiBold.woff') format('woff');
+            font-weight: 600;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Pretendard';
+            src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Bold.woff') format('woff');
+            font-weight: 700;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Pretendard';
+            src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-ExtraBold.woff') format('woff');
+            font-weight: 800;
+            font-style: normal;
+        }
+        
+        body{
+            font-family: 'Pretendard';
+            padding: 20px;
+        }
+
+        header{
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            
+        }
+        
+        button{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 40px;
+            border-radius: 40px;
+            vertical-align: top;
+            border: 0;
+            padding: 0 20px;
+            cursor: pointer;
+        }
+
+        .on-air{
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 20px solid #fff;
+            /* background: #f00; */
+            box-shadow: 0 0 15px #f00, inset 0 0 15px #f00;
+            margin-right: 30px;
+        }
+
+        p{text-align: center;}
+
+    </style>
+</head>
+<body>
+    <header>
+        <button id="startRecording" class="on-air"></button>
+        <button id="stopRecording">영상 출력</button>
+    </header>
+    <p>아직 소리는 녹음할 수 업고<br>영상을 다운받을 경우 확장자가 <strong>webm</strong>이 됩니다.</p>
+    <script>
+        let mediaStream;
+
+        // 녹화된 비디오를 저장할 Blob 객체
+        let recordedChunks = [];
+
+        let mediaRecorder;
+
+        // 녹화 시작 버튼 클릭 이벤트 핸들러
+        startRecording.addEventListener('click', async () => {
+            try {
+                // 브라우저에서 미디어 스트림 요청
+                mediaStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: true,
+                    // audio: true
+                });
+
+                // MediaRecorder 생성 및 설정
+                mediaRecorder = new MediaRecorder(mediaStream, { mimeType: 'video/webm' });
+
+                // 데이터가 녹화될 때마다 호출될 이벤트 핸들러
+                mediaRecorder.ondataavailable = event => {
+                    if (event.data.size > 0) {
+                        recordedChunks.push(event.data);
+                    }
+                };
+
+                // 녹화 시작
+                mediaRecorder.start();
+            } catch (err) {
+                console.error('Error accessing media devices: ', err);
+            }
+        });
+
+        // 녹화 중지 버튼 클릭 이벤트 핸들러
+        stopRecording.addEventListener('click', () => {
+            if (mediaStream) {
+                // 녹화 중지
+                mediaStream.getTracks().forEach(track => track.stop());
+
+                // MediaRecorder 종료
+                mediaRecorder.stop();
+
+                // Blob 객체를 하나로 합친 후 비디오 파일로 변환
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+
+                // 비디오 요소를 생성하여 녹화된 비디오를 표시
+                const videoElement = document.createElement('video');
+                videoElement.src = url;
+                videoElement.style.width ='100%';
+                videoElement.controls = true;
+                document.body.appendChild(videoElement);
+
+            }
+        });
+    </script>
+</body>
+</html>
